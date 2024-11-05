@@ -74,15 +74,18 @@
         // Conectar a la base de datos SQLite
         $db = new PDO('sqlite:/var/www/html/basedatos_dist_frec.dB');
 
-        // Consultar los primeros valores de distancias y frecuencias
-        $result = $db->query('SELECT distancias, frecuencias FROM datos LIMIT 1');
-        $row = $result->fetch(PDO::FETCH_ASSOC);
+        // Consultar el primer valor de distancia y frecuencia
+        $distancia_result = $db->query('SELECT distancia FROM distancias LIMIT 1');
+        $frecuencia_result = $db->query('SELECT frecuencia FROM frecuencias LIMIT 1');
+        
+        $distancia_row = $distancia_result->fetch(PDO::FETCH_ASSOC);
+        $frecuencia_row = $frecuencia_result->fetch(PDO::FETCH_ASSOC);
 
         // Verificar que se obtuvo un resultado
-        if ($row) {
+        if ($distancia_row && $frecuencia_row) {
             // Convertir los valores a números flotantes
-            $distancia = (float)$row['distancias'];
-            $frecuencia = (float)$row['frecuencias'];
+            $distancia = (float)$distancia_row['distancia'];
+            $frecuencia = (float)$frecuencia_row['frecuencia'];
 
             // Mostrar frecuencia y distancia
             echo "<div class='data'>Frecuencia: <span>$frecuencia Hz</span></div>";
@@ -134,22 +137,30 @@
         $date_max = $_GET['date_max'];
 
         try {
-            // Consultar los datos en el rango de fechas
-            $query = $db->prepare('SELECT * FROM datos WHERE fecha BETWEEN :date_min AND :date_max');
-            $query->bindParam(':date_min', $date_min);
-            $query->bindParam(':date_max', $date_max);
-            $query->execute();
-            $records = $query->fetchAll(PDO::FETCH_ASSOC);
+            // Consultar los datos en el rango de fechas en ambas tablas
+            $query_distancias = $db->prepare('SELECT * FROM distancias WHERE fecha BETWEEN :date_min AND :date_max');
+            $query_frecuencias = $db->prepare('SELECT * FROM frecuencias WHERE fecha BETWEEN :date_min AND :date_max');
+            $query_distancias->bindParam(':date_min', $date_min);
+            $query_distancias->bindParam(':date_max', $date_max);
+            $query_frecuencias->bindParam(':date_min', $date_min);
+            $query_frecuencias->bindParam(':date_max', $date_max);
+            $query_distancias->execute();
+            $query_frecuencias->execute();
+            
+            $distancias_records = $query_distancias->fetchAll(PDO::FETCH_ASSOC);
+            $frecuencias_records = $query_frecuencias->fetchAll(PDO::FETCH_ASSOC);
 
             // Mostrar los registros en una tabla
-            if ($records) {
+            if ($distancias_records && $frecuencias_records) {
                 echo "<div class='table-header'>Historial de Mediciones</div>";
                 echo "<table>";
                 echo "<tr><th>Fecha</th><th>Frecuencia (Hz)</th><th>Distancia (cm)</th></tr>";
-                foreach ($records as $record) {
-                    echo "<tr><td>" . htmlspecialchars($record['fecha']) . "</td>";
-                    echo "<td>" . htmlspecialchars($record['frecuencias']) . "</td>";
-                    echo "<td>" . htmlspecialchars($record['distancias']) . "</td></tr>";
+                foreach ($distancias_records as $index => $record) {
+                    $frecuencia = $frecuencias_records[$index]['frecuencia'] ?? "N/A";
+                    $distancia = $record['distancia'] ?? "N/A";
+                    $fecha = htmlspecialchars($record['fecha']);
+                    
+                    echo "<tr><td>$fecha</td><td>$frecuencia</td><td>$distancia</td></tr>";
                 }
                 echo "</table>";
             } else {
