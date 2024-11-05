@@ -21,14 +21,18 @@ if ser.is_open:
 # Función para insertar datos en la base de datos
 def guardar_en_base_de_datos(dato):
     dato = dato.strip()
-    frec = dato[:5]
-    dist = dato[5:]
-    cursor.execute("INSERT INTO frecuencias(frecuencia) VALUES (?)", (frec,))
+    frec = dato[:5]  # Frecuencia (suponiendo que es la primera parte del dato)
+    dist = dato[5:]  # Distancia (resto del dato)
+    
+    # Obtener fecha y hora actuales
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+    # Insertar los datos en la base de datos con fecha y hora
+    cursor.execute("INSERT INTO frecuencias(frecuencia, timestamp) VALUES (?, ?)", (frec, timestamp))
+    cursor.execute("INSERT INTO distancias(distancia, timestamp) VALUES (?, ?)", (dist, timestamp))
     conn.commit()  # Guarda los cambios en la base de datos
-    cursor.execute("INSERT INTO distancias(distancia) VALUES (?)", (dist,))
-    conn.commit()  # Guarda los cambios en la base de datos
-    print(f"Datos guardados en la base de datos: {frec}")
-    print(f"Datos guardados en la base de datos: {dist}")
+    
+    print(f"Datos guardados en la base de datos: Frecuencia={frec}, Distancia={dist}, Timestamp={timestamp}")
 
 # Leer datos del puerto serial y guardarlos en la base de datos
 try:
@@ -37,7 +41,7 @@ try:
         data = ser.readline()  # Lee una línea de datos del pin RX
         if data:
             print(data)
-            dato = data
+            dato = data.decode().strip()  # Decodifica y quita espacios innecesarios
             # Guardar en la base de datos
             guardar_en_base_de_datos(dato)
 except KeyboardInterrupt:
