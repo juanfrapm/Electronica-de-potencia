@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estado de la Alarma</title>
+    <title>Registro de Alarma y Datos Históricos</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,26 +11,32 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            flex-direction: column;
             height: 100vh;
             margin: 0;
         }
-        .container {
+        .container, .history {
             background-color: #ffffff;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             text-align: center;
             width: 80%;
-            max-width: 400px;
+            max-width: 600px;
+            margin-bottom: 20px;
         }
         .header {
             color: #333;
             font-size: 24px;
             margin-bottom: 20px;
         }
-        .data {
-            font-size: 20px;
+        .data, .table-header {
+            font-size: 18px;
             margin: 10px 0;
+        }
+        .table-header {
+            font-weight: bold;
+            color: #333;
         }
         .active {
             color: #ff4d4d;
@@ -40,59 +46,121 @@
             color: #4CAF50;
             font-weight: bold;
         }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        form {
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">Estado de la Alarma</div>
 
-        <?php
-        try {
-            // Conectar a la base de datos SQLite
-            $db = new PDO('sqlite:/var/www/html/mydatabase.db');
+<div class="container">
+    <div class="header">Estado de la Alarma</div>
 
-            // Consultar los primeros valores de frecuencia y distancia
-            $result = $db->query('SELECT frecuencia, distancia FROM datos LIMIT 1');
-            $row = $result->fetch(PDO::FETCH_ASSOC);
+    <?php
+    try {
+        // Conectar a la base de datos SQLite
+        $db = new PDO('sqlite:/var/www/html/mydatabase.db');
 
-            // Verificar que se obtuvo un resultado
-            if ($row) {
-                // Convertir los valores a números flotantes
-                $frecuencia = (float)$row['frecuencia'];
-                $distancia = (float)$row['distancia'];
+        // Consultar los primeros valores de frecuencia y distancia
+        $result = $db->query('SELECT frecuencia, distancia FROM datos LIMIT 1');
+        $row = $result->fetch(PDO::FETCH_ASSOC);
 
-                // Mostrar frecuencia y distancia
-                echo "<div class='data'>Frecuencia: <span>$frecuencia Hz</span></div>";
-                echo "<div class='data'>Distancia: <span>$distancia cm</span></div>";
+        // Verificar que se obtuvo un resultado
+        if ($row) {
+            // Convertir los valores a números flotantes
+            $frecuencia = (float)$row['frecuencia'];
+            $distancia = (float)$row['distancia'];
 
-                // Determinar el estado de la alarma
-                $alarma = "inactiva";
-                $razon = "";
+            // Mostrar frecuencia y distancia
+            echo "<div class='data'>Frecuencia: <span>$frecuencia Hz</span></div>";
+            echo "<div class='data'>Distancia: <span>$distancia cm</span></div>";
 
-                if ($frecuencia < 40.00) {
-                    $alarma = "activa";
-                    $razon = "frecuencia";
-                } elseif ($frecuencia > 60.00) {
-                    $alarma = "activa";
-                    $razon = "frecuencia";
-                } elseif ($distancia < 30.00) {
-                    $alarma = "activa";
-                    $razon = "distancia";
-                }
+            // Determinar el estado de la alarma
+            $alarma = "inactiva";
+            $razon = "";
 
-                // Mostrar el estado de la alarma
-                if ($alarma == "activa") {
-                    echo "<div class='data active'>Alarma activa por $razon</div>";
-                } else {
-                    echo "<div class='data inactive'>Alarma inactiva</div>";
-                }
+            if ($frecuencia < 40.00) {
+                $alarma = "activa";
+                $razon = "frecuencia";
+            } elseif ($frecuencia > 60.00) {
+                $alarma = "activa";
+                $razon = "frecuencia";
+            } elseif ($distancia < 30.00) {
+                $alarma = "activa";
+                $razon = "distancia";
+            }
+
+            // Mostrar el estado de la alarma
+            if ($alarma == "activa") {
+                echo "<div class='data active'>Alarma activa por $razon</div>";
             } else {
-                echo "<div class='data'>No se encontraron datos en la base de datos.</div>";
+                echo "<div class='data inactive'>Alarma inactiva</div>";
+            }
+        } else {
+            echo "<div class='data'>No se encontraron datos en la base de datos.</div>";
+        }
+    } catch (PDOException $e) {
+        echo "<div class='data'>Error: " . $e->getMessage() . "</div>";
+    }
+    ?>
+</div>
+
+<div class="history">
+    <form method="GET" action="">
+        <label for="date_min">Fecha mínima:</label>
+        <input type="date" id="date_min" name="date_min" required>
+        <label for="date_max">Fecha máxima:</label>
+        <input type="date" id="date_max" name="date_max" required>
+        <button type="submit">Consultar</button>
+        <button type="button" onclick="location.reload();">Recargar</button>
+    </form>
+
+    <?php
+    if (isset($_GET['date_min']) && isset($_GET['date_max'])) {
+        $date_min = $_GET['date_min'];
+        $date_max = $_GET['date_max'];
+
+        try {
+            // Consultar los datos en el rango de fechas
+            $query = $db->prepare('SELECT * FROM datos WHERE fecha BETWEEN :date_min AND :date_max');
+            $query->bindParam(':date_min', $date_min);
+            $query->bindParam(':date_max', $date_max);
+            $query->execute();
+            $records = $query->fetchAll(PDO::FETCH_ASSOC);
+
+            // Mostrar los registros en una tabla
+            if ($records) {
+                echo "<div class='table-header'>Historial de Mediciones</div>";
+                echo "<table>";
+                echo "<tr><th>Fecha</th><th>Frecuencia (Hz)</th><th>Distancia (cm)</th></tr>";
+                foreach ($records as $record) {
+                    echo "<tr><td>" . htmlspecialchars($record['fecha']) . "</td>";
+                    echo "<td>" . htmlspecialchars($record['frecuencia']) . "</td>";
+                    echo "<td>" . htmlspecialchars($record['distancia']) . "</td></tr>";
+                }
+                echo "</table>";
+            } else {
+                echo "<div class='data'>No se encontraron registros en el rango de fechas seleccionado.</div>";
             }
         } catch (PDOException $e) {
             echo "<div class='data'>Error: " . $e->getMessage() . "</div>";
         }
-        ?>
-    </div>
+    }
+    ?>
+</div>
+
 </body>
 </html>
