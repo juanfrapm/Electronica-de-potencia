@@ -72,17 +72,17 @@
     <?php
     try {
         // Conectar a la base de datos SQLite
-        $db = new PDO('sqlite:/var/www/html/mydatabase.db');
+        $db = new PDO('sqlite:/var/www/html/basedatos_dist_frec.dB');
 
-        // Consultar los primeros valores de frecuencia y distancia
-        $result = $db->query('SELECT frecuencia, distancia FROM datos LIMIT 1');
+        // Consultar los primeros valores de distancias y frecuencias
+        $result = $db->query('SELECT distancias, frecuencias FROM datos LIMIT 1');
         $row = $result->fetch(PDO::FETCH_ASSOC);
 
         // Verificar que se obtuvo un resultado
         if ($row) {
             // Convertir los valores a números flotantes
-            $frecuencia = (float)$row['frecuencia'];
-            $distancia = (float)$row['distancia'];
+            $distancia = (float)$row['distancias'];
+            $frecuencia = (float)$row['frecuencias'];
 
             // Mostrar frecuencia y distancia
             echo "<div class='data'>Frecuencia: <span>$frecuencia Hz</span></div>";
@@ -148,8 +148,8 @@
                 echo "<tr><th>Fecha</th><th>Frecuencia (Hz)</th><th>Distancia (cm)</th></tr>";
                 foreach ($records as $record) {
                     echo "<tr><td>" . htmlspecialchars($record['fecha']) . "</td>";
-                    echo "<td>" . htmlspecialchars($record['frecuencia']) . "</td>";
-                    echo "<td>" . htmlspecialchars($record['distancia']) . "</td></tr>";
+                    echo "<td>" . htmlspecialchars($record['frecuencias']) . "</td>";
+                    echo "<td>" . htmlspecialchars($record['distancias']) . "</td></tr>";
                 }
                 echo "</table>";
             } else {
