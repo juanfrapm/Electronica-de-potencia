@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estado de la Alarma</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            width: 80%;
+            max-width: 400px;
+        }
+        .header {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .data {
+            font-size: 20px;
+            margin: 10px 0;
+        }
+        .active {
+            color: #ff4d4d;
+            font-weight: bold;
+        }
+        .inactive {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">Estado de la Alarma</div>
+
+        <?php
+        try {
+            // Conectar a la base de datos SQLite
+            $db = new PDO('sqlite:/var/www/html/mydatabase.db');
+
+            // Consultar los primeros valores de frecuencia y distancia
+            $result = $db->query('SELECT frecuencia, distancia FROM datos LIMIT 1');
+            $row = $result->fetch(PDO::FETCH_ASSOC);
+
+            // Verificar que se obtuvo un resultado
+            if ($row) {
+                // Convertir los valores a números flotantes
+                $frecuencia = (float)$row['frecuencia'];
+                $distancia = (float)$row['distancia'];
+
+                // Mostrar frecuencia y distancia
+                echo "<div class='data'>Frecuencia: <span>$frecuencia Hz</span></div>";
+                echo "<div class='data'>Distancia: <span>$distancia cm</span></div>";
+
+                // Determinar el estado de la alarma
+                $alarma = "inactiva";
+                $razon = "";
+
+                if ($frecuencia < 40.00) {
+                    $alarma = "activa";
+                    $razon = "frecuencia";
+                } elseif ($frecuencia > 60.00) {
+                    $alarma = "activa";
+                    $razon = "frecuencia";
+                } elseif ($distancia < 30.00) {
+                    $alarma = "activa";
+                    $razon = "distancia";
+                }
+
+                // Mostrar el estado de la alarma
+                if ($alarma == "activa") {
+                    echo "<div class='data active'>Alarma activa por $razon</div>";
+                } else {
+                    echo "<div class='data inactive'>Alarma inactiva</div>";
+                }
+            } else {
+                echo "<div class='data'>No se encontraron datos en la base de datos.</div>";
+            }
+        } catch (PDOException $e) {
+            echo "<div class='data'>Error: " . $e->getMessage() . "</div>";
+        }
+        ?>
+    </div>
+</body>
+</html>
