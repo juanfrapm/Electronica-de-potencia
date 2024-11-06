@@ -14,6 +14,7 @@
             flex-direction: column;
             height: 100vh;
             margin: 0;
+            overflow-y: auto; /* Permitir desplazamiento vertical si el contenido total excede la altura de la pantalla */
         }
         .container, .history {
             background-color: #ffffff;
@@ -24,6 +25,10 @@
             width: 80%;
             max-width: 600px;
             margin-bottom: 20px;
+        }
+        .history {
+            max-height: 300px; /* Limitar la altura del historial */
+            overflow-y: auto; /* Agregar desplazamiento cuando haya muchos datos */
         }
         .header {
             color: #333;
