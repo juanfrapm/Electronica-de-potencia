@@ -77,11 +77,11 @@
     <?php
     try {
         // Conectar a la base de datos SQLite
-        $db = new PDO('sqlite:/var/www/html/basedatos_dist_frec.dB');
+        $db = new PDO('sqlite:/var/www/html/basedatos_dist_frec.db');
 
         // Consultar el primer valor de distancia y frecuencia
-        $distancia_result = $db->query('SELECT distancia FROM distancias LIMIT 1');
-        $frecuencia_result = $db->query('SELECT frecuencia FROM frecuencias LIMIT 1');
+        $distancia_result = $db->query('SELECT distancia FROM distancias ORDER BY timestamp DESC LIMIT 1');
+        $frecuencia_result = $db->query('SELECT frecuencia FROM frecuencias ORDER BY timestamp DESC LIMIT 1');
         
         $distancia_row = $distancia_result->fetch(PDO::FETCH_ASSOC);
         $frecuencia_row = $frecuencia_result->fetch(PDO::FETCH_ASSOC);
@@ -143,8 +143,8 @@
 
         try {
             // Consultar los datos en el rango de fechas en ambas tablas
-            $query_distancias = $db->prepare('SELECT * FROM distancias WHERE fecha BETWEEN :date_min AND :date_max');
-            $query_frecuencias = $db->prepare('SELECT * FROM frecuencias WHERE fecha BETWEEN :date_min AND :date_max');
+            $query_distancias = $db->prepare('SELECT * FROM distancias WHERE timestamp BETWEEN :date_min AND :date_max');
+            $query_frecuencias = $db->prepare('SELECT * FROM frecuencias WHERE timestamp BETWEEN :date_min AND :date_max');
             $query_distancias->bindParam(':date_min', $date_min);
             $query_distancias->bindParam(':date_max', $date_max);
             $query_frecuencias->bindParam(':date_min', $date_min);
@@ -163,7 +163,7 @@
                 foreach ($distancias_records as $index => $record) {
                     $frecuencia = $frecuencias_records[$index]['frecuencia'] ?? "N/A";
                     $distancia = $record['distancia'] ?? "N/A";
-                    $fecha = htmlspecialchars($record['fecha']);
+                    $fecha = htmlspecialchars($record['timestamp']);
                     
                     echo "<tr><td>$fecha</td><td>$frecuencia</td><td>$distancia</td></tr>";
                 }
