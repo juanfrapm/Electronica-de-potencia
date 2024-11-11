@@ -1,6 +1,5 @@
-#define pin_alfa 5 //D1
 #define potenciometro A0 //A0
-#define restaRS 0
+#define pin_restaRS 34
 #define pin_T1 35
 #define pin_T2 32
 #define pin_T3 33
@@ -12,49 +11,164 @@
 #define pin_i 14
 
 int valorPot;
+
 int voltajeIn;
-int sumaVIN;
+int sumaVINdc;
+int sumaVINrms;
 int VINdc;
 int VINrms;
+
 int voltajeOut;
-int sumaVOUT;
+int sumaVOUTdc;
+int sumaVOUTrms;
 int VOUTdc;
 int VOUTrms;
+
 int corriente;
+int sumaIdc;
+int sumaIrms;
+int Idc;
+int Irms;
+
+int suma;
+int sumaPeriodos;
+
+int tant = 0;
+int dt;
+
+int aux;
 
 
 void IRAM_ATTR interrupcion(){ // funcion que se ejecuta con la interrupción
-  unsigned long currentMicros = micros();
-  int retraso = valorPot*(2500)/1023; // calculo el tiempo que tengo que esperar dependiendo del valor del potenciómetro
-  while(currentMicros < retraso); //Espero el tiempo correspondiente a alfa
-  digitalWrite(pin_T2, HIGH);
-  digitalWrite(pin_T6, HIGH); // T2 y T6
-  while(currentMicros < 2500);
-  while(currentMicros < retraso); //Espero el tiempo correspondiente a alfa
-  digitalWrite(pin_T6, LOW);
-  digitalWrite(pin_T4, HIGH); // T2 y T4
-  while(currentMicros < 5000);
-  while(currentMicros < retraso); //Espero el tiempo correspondiente a alfa
-  digitalWrite(pin_T6, LOW);
+  int tiempoinicio = micros(); //mido en que momento comencé el período
+  int retraso = valorPot*(3333)/1023; // calculo el tiempo que tengo que esperar dependiendo del valor del potenciómetro (3333 microsegundos equivale a pi/3)
+  sumaPeriodos++; //cuento los periodos para promediar mas adelante
+  while(micros() - tiempoinicio < retraso){ //Espero el tiempo correspondiente al retraso
+    // por mientras uso ese tiempo para medir
+    dt = micros() - tant;
+    aux = analogRead(pin_vIn)*dt;
+    sumaVINdc += aux;
+    sumaVINrms += aux*aux;
+    aux = analogRead(pin_vOut)*dt;
+    sumaVOUTdc += aux;
+    sumaVOUTrms += aux*aux;
+    aux = analogRead(pin_i)*dt;
+    sumaIdc += aux;
+    sumaIrms += aux*aux;
+    tant = micros();
+    suma++;
+  }; 
+  
+  digitalWrite(pin_T2, HIGH); //enciendo T2
+  digitalWrite(pin_T6, HIGH); //enciendo T6
+  
+  while(micros() - tiempoinicio < 3333 + retraso){ //Espero el tiempo correspondiente a alfa
+    // por mientras uso ese tiempo para medir
+    dt = micros() - tant;
+    aux = analogRead(pin_vIn)*dt;
+    sumaVINdc += aux;
+    sumaVINrms += aux*aux;
+    aux = analogRead(pin_vOut)*dt;
+    sumaVOUTdc += aux;
+    sumaVOUTrms += aux*aux;
+    aux = analogRead(pin_i)*dt;
+    sumaIdc += aux;
+    sumaIrms += aux*aux;
+    tant = micros();
+    suma++;
+  };
+  digitalWrite(pin_T4, HIGH); // enciendo T4
+  digitalWrite(pin_T6, LOW); // apago T6 y T2
+  digitalWrite(pin_T2, LOW);
+  while(micros() - tiempoinicio < 6666 + retraso){ //Espero el tiempo correspondiente a alfa
+    // por mientras uso ese tiempo para medir
+    dt = micros() - tant;
+    aux = analogRead(pin_vIn)*dt;
+    sumaVINdc += aux;
+    sumaVINrms += aux*aux;
+    aux = analogRead(pin_vOut)*dt;
+    sumaVOUTdc += aux;
+    sumaVOUTrms += aux*aux;
+    aux = analogRead(pin_i)*dt;
+    sumaIdc += aux;
+    sumaIrms += aux*aux;
+    tant = micros();
+    suma++;
+  };
   digitalWrite(pin_T3, HIGH); // T3 y T4
-  while(currentMicros < 7500);
-  while(currentMicros < retraso); //Espero el tiempo correspondiente a alfa
   digitalWrite(pin_T4, LOW);
+  while(micros() - tiempoinicio < 9999 + retraso){ //Espero el tiempo correspondiente a alfa
+    // por mientras uso ese tiempo para medir
+    dt = micros() - tant;
+    aux = analogRead(pin_vIn)*dt;
+    sumaVINdc += aux;
+    sumaVINrms += aux*aux;
+    aux = analogRead(pin_vOut)*dt;
+    sumaVOUTdc += aux;
+    sumaVOUTrms += aux*aux;
+    aux = analogRead(pin_i)*dt;
+    sumaIdc += aux;
+    sumaIrms += aux*aux;
+    tant = micros();
+    suma++;
+  };
   digitalWrite(pin_T5, HIGH); // T3 y T5
-  while(currentMicros < 10000);
-  while(currentMicros < retraso); //Espero el tiempo correspondiente a alfa
   digitalWrite(pin_T3, LOW);
+  while(micros() - tiempoinicio < 13332 + retraso){ //Espero el tiempo correspondiente a alfa
+    // por mientras uso ese tiempo para medir
+    dt = micros() - tant;
+    aux = analogRead(pin_vIn)*dt;
+    sumaVINdc += aux;
+    sumaVINrms += aux*aux;
+    aux = analogRead(pin_vOut)*dt;
+    sumaVOUTdc += aux;
+    sumaVOUTrms += aux*aux;
+    aux = analogRead(pin_i)*dt;
+    sumaIdc += aux;
+    sumaIrms += aux*aux;
+    tant = micros();
+    suma++;
+  };
   digitalWrite(pin_T1, HIGH); // T1 y T5
-  while(currentMicros < 12500);
-  while(currentMicros < retraso); //Espero el tiempo correspondiente a alfa
   digitalWrite(pin_T5, LOW);
+  if(sumaPeriodos > 25){
+    VINdc = sumaVINdc/500; // el 500 sale de 25 períodos * 20 microsegundos c/u (hay que ajustar unidades)
+    VOUTdc = sumaVOUTdc/500;
+    Idc = sumaIdc/500;
+
+    VINrms = sumaVINrms/500;
+    VOUTrms = sumaVOUTrms/500;
+    Irms = sumaIrms/500;
+
+    sumaVIN = 0;
+    sumaVOUT = 0;
+    sumaI = 0;
+    suma = 0;
+    
+  }
+  while(micros() - tiempoinicio < 16665 + retraso){ //Espero el tiempo correspondiente a alfa
+    // por mientras uso ese tiempo para medir
+    dt = micros() - tant;
+    aux = analogRead(pin_vIn)*dt;
+    sumaVINdc += aux;
+    sumaVINrms += aux*aux;
+    aux = analogRead(pin_vOut)*dt;
+    sumaVOUTdc += aux;
+    sumaVOUTrms += aux*aux;
+    aux = analogRead(pin_i)*dt;
+    sumaIdc += aux;
+    sumaIrms += aux*aux;
+    tant = micros();
+    suma++;
+  };
   digitalWrite(pin_T6, HIGH); // T1 y T6
+  digitalWrite(pin_T1, LOW);
 }
 
 
 void setup() {
   // falta definir pines como entrada
-  attachInterrupt(digitalPinToInterrupt(pin_alfa), interrupcion, RISING);
+  attachInterrupt(digitalPinToInterrupt(pin_restaRS), interrupcion, RISING);
   pinMode(pin_T1, OUTPUT);
   pinMode(pin_T2, OUTPUT);
   pinMode(pin_T3, OUTPUT);
@@ -76,4 +190,3 @@ void loop() {
   voltajeOut = analogRead(pin_vOut);
   corriente = analogRead(pin_i);
 }
-
