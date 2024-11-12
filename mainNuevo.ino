@@ -1,14 +1,15 @@
-#define potenciometro A0 //A0
-#define pin_restaRS 34
-#define pin_T1 35
-#define pin_T2 32
-#define pin_T3 33
-#define pin_T4 25
-#define pin_T5 26
-#define pin_T6 27
-#define pin_vIn 12
-#define pin_vOut 13
-#define pin_i 14
+#define potenciometro 36 //O A0
+#define pin_restaRS 32
+#define pin_T1 12
+#define pin_T2 14
+#define pin_T3 26
+#define pin_T4 27
+#define pin_T5 25
+#define pin_T6 33
+#define pin_vIn 13
+#define pin_vOut 34
+#define pin_i 39
+#define pin_iOut 35
 
 int valorPot;
 
@@ -41,7 +42,7 @@ int aux;
 
 void IRAM_ATTR interrupcion(){ // funcion que se ejecuta con la interrupción
   int tiempoinicio = micros(); //mido en que momento comencé el período
-  int retraso = valorPot*(3333)/1023; // calculo el tiempo que tengo que esperar dependiendo del valor del potenciómetro (3333 microsegundos equivale a pi/3)
+  int retraso = valorPot*(3333)/511; // calculo el tiempo que tengo que esperar dependiendo del valor del potenciómetro (3333 microsegundos equivale a pi/3)
   sumaPeriodos++; //cuento los periodos para promediar mas adelante
   while(micros() - tiempoinicio < retraso){ //Espero el tiempo correspondiente al retraso
     // por mientras uso ese tiempo para medir
@@ -178,6 +179,8 @@ void setup() {
   pinMode(voltajeIn, INPUT);
   pinMode(voltajeOut, INPUT);
   pinMode(corriente, INPUT);
+  Serial.begin(9600);
+  analogReadResolution(9);
 }
 
 void loop() {
