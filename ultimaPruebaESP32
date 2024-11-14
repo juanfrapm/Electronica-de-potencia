@@ -42,8 +42,9 @@ volatile int retraso;
 
 void IRAM_ATTR interrupcion(){ // funcion que se ejecuta con la interrupción
   int tiempoinicio = micros();
+  Serial.println(valorPot);
   digitalWrite(pin_T3, HIGH); //enciendo T2
-  while(micros() - tiempoinicio < 3333 + (valorPot));
+  while(micros() - tiempoinicio < (3333 + valorPot));
   digitalWrite(pin_T3, LOW); //enciendo T2
   /*
   int tiempoinicio = micros(); //mido en que momento comencé el período
@@ -189,12 +190,11 @@ void setup() {
   pinMode(voltajeOut, INPUT);
   pinMode(corriente, INPUT);
   Serial.begin(9600);
-  analogReadResolution(9);
+  //analogReadResolution(9);
 }
 
 void loop() {
   valorPot = analogRead(potenciometro);
-  Serial.println(retraso);
   
   voltajeIn = analogRead(pin_vIn);
   
