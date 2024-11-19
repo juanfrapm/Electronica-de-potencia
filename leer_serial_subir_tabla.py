@@ -37,11 +37,12 @@ def guardar_en_base_de_datos(dato):
 # Leer datos del puerto serial y guardarlos en la base de datos
 try:
     while True:
-        time.sleep(5)
-        data = ser.readline()  # Lee una línea de datos del pin RX
+        tiempo = time.time()
+        while time.time() - tiempo < 5:
+            data = ser.readline()  # Lee una línea de datos del pin RX
         if data:
             print(data)
-            dato = data.decode().strip()  # Decodifica y quita espacios innecesarios
+            dato = data.strip()  # Decodifica y quita espacios innecesarios
             # Guardar en la base de datos
             guardar_en_base_de_datos(dato)
 except KeyboardInterrupt:
