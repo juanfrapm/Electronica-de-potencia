@@ -1,4 +1,6 @@
-//#include <WiFi.h> //para deshabiloitar el wifi y poder usar el adc2
+
+
+TaskHandle_t Medidas;
 
 #define potenciometro 36 //O A0
 #define pin_restaRS 32
@@ -14,28 +16,28 @@
 #define pin_iOut 35
 
 int valorPot;
-/*
+
 int voltajeIn;
 int sumaVINdc;
 int sumaVINrms;
-float VINdc;
-float VINrms;
+int VINdc;
+int VINrms;
 
 int voltajeOut;
 int sumaVOUTdc;
 int sumaVOUTrms;
-float VOUTdc;
-float VOUTrms;
+int VOUTdc;
+int VOUTrms;
 
 int corriente;
 int sumaIdc;
 int sumaIrms;
-float Idc;
-float Irms;
+int Idc;
+int Irms;
 
-int suma;
+
 int sumaPeriodos;
-*/
+
 int tant = 0;
 int dt;
 
@@ -52,205 +54,40 @@ void IRAM_ATTR interrupcion(){ // funcion que se ejecuta con la interrupción
   
   int tiempoinicio = micros(); //mido en que momento comencé el período
   retraso = valorPot*(3333)/511; // calculo el tiempo que tengo que esperar dependiendo del valor del potenciómetro (3333 microsegundos equivale a pi/3)
-  //sumaPeriodos++; //cuento los periodos para promediar mas adelante
-  
+  sumaPeriodos++; //cuento los periodos para promediar mas adelante
   while(micros() - tiempoinicio < retraso){ //Espero el tiempo correspondiente al retraso
     // por mientras uso ese tiempo para medir
-    //dt = micros() - tant;
-    //Serial.println("valor medido: " + analogRead(pin_vIn)*311/511);
-    //aux = (analogRead(pin_vIn)*311*dt)/511; // 311 es el valor máximo que puede tomar vIn
-    //sumaVINrms += aux*aux;
-    /*
-    aux = (analogRead(pin_vOut)*311*dt)/511;
-    sumaVOUTdc += aux;
-    sumaVOUTrms += aux*aux;
-    aux = ((analogRead(pin_i))*100*dt)/511;
-    sumaIdc += aux;
-    sumaIrms += aux*aux;
-    */
-    //tant = micros();
+    
   }; 
-  digitalWrite(pin_T3, LOW);
-  digitalWrite(pin_T4, HIGH); //enciendo T4
-  
+  digitalWrite(pin_T6, LOW);
+  digitalWrite(pin_T2, HIGH); //enciendo T4
   
   while(micros() - tiempoinicio < 3333 + retraso){ //Espero el tiempo correspondiente a alfa
  // por mientras uso ese tiempo para medir
-    if(micros() - lectura > 300){
-      aux = analogRead(pin_vOut);
-      aux2 = analogRead(pin_vIn);
-      if(aux != 0){
-        Serial.print("vOut=");
-        Serial.print(aux);
-        Serial.print(",");  // Separador
-        Serial.print("vIn=");
-        Serial.println(aux2);
-      }
-      lectura = micros();
-    };   
-    //dt = micros() - tant;
-    //Serial.println("valor medido: " + analogRead(pin_vIn)*311/511);
-    //aux = (analogRead(pin_vIn)*311*dt)/511; // 311 es el valor máximo que puede tomar vIn
-    //sumaVINrms += aux*aux;
-    /*
-    aux = (analogRead(pin_vOut)*311*dt)/511;
-    sumaVOUTdc += aux;
-    sumaVOUTrms += aux*aux;
-    aux = ((analogRead(pin_i))*100*dt)/511;
-    sumaIdc += aux;
-    sumaIrms += aux*aux;
-    */
-    //tant = micros();
-  };
-  digitalWrite(pin_T4, LOW);
-  digitalWrite(pin_T2, HIGH); // enciendo T2
-  
-  
-  while(micros() - tiempoinicio < 6666 + retraso){ //Espero el tiempo correspondiente a alfa
-    if(micros() - lectura > 300){
-      aux = analogRead(pin_vOut);
-      aux2 = analogRead(pin_vIn);
-      if(aux != 0){
-        Serial.print("vOut=");
-        Serial.print(aux);
-        Serial.print(",");  // Separador
-        Serial.print("vIn=");
-        Serial.println(aux2);
-      }
-      lectura = micros();
-    }; 
-    // por mientras uso ese tiempo para medir
-    //dt = micros() - tant;
-    //Serial.println("valor medido: " + analogRead(pin_vIn)*311/511);
-    //aux = (analogRead(pin_vIn)*311*dt)/511; // 311 es el valor máximo que puede tomar vIn
-    //sumaVINrms += aux*aux;
-    /*
-    aux = (analogRead(pin_vOut)*311*dt)/511;
-    sumaVOUTdc += aux;
-    sumaVOUTrms += aux*aux;
-    aux = ((analogRead(pin_i))*100*dt)/511;
-    sumaIdc += aux;
-    sumaIrms += aux*aux;
-    */
-    //tant = micros();
   };
   digitalWrite(pin_T2, LOW);
-  digitalWrite(pin_T6, HIGH); // enciendo T6
+  digitalWrite(pin_T4, HIGH); // enciendo T2
+  
+  while(micros() - tiempoinicio < 6666 + retraso){ //Espero el tiempo correspondiente a alfa
+  };
+  digitalWrite(pin_T4, LOW);
+  digitalWrite(pin_T3, HIGH); // enciendo T6
   
   
   while(micros() - tiempoinicio < 9999 + retraso){ //Espero el tiempo correspondiente a alfa
-    if(micros() - lectura > 300){
-      aux = analogRead(pin_vOut);
-      aux2 = analogRead(pin_vIn);
-      if(aux != 0){
-        Serial.print("vOut=");
-        Serial.print(aux);
-        Serial.print(",");  // Separador
-        Serial.print("vIn=");
-        Serial.println(aux2);
-      }
-      lectura = micros();
-    }; 
-    // por mientras uso ese tiempo para medir
-    //dt = micros() - tant;
-    //Serial.println("valor medido: " + analogRead(pin_vIn)*311/511);
-    //aux = (analogRead(pin_vIn)*311*dt)/511; // 311 es el valor máximo que puede tomar vIn
-    //sumaVINrms += aux*aux;
-    /*
-    aux = (analogRead(pin_vOut)*311*dt)/511;
-    sumaVOUTdc += aux;
-    sumaVOUTrms += aux*aux;
-    aux = ((analogRead(pin_i))*100*dt)/511;
-    sumaIdc += aux;
-    sumaIrms += aux*aux;
-    */
-    //tant = micros();
   };
-  digitalWrite(pin_T6, LOW);
-  digitalWrite(pin_T1, HIGH); // enciendo T4
-  
-  
-  while(micros() - tiempoinicio < 13332 + retraso){ //Espero el tiempo correspondiente a alfa
-    if(micros() - lectura > 300){
-      aux = analogRead(pin_vOut);
-      aux2 = analogRead(pin_vIn);
-      if(aux != 0){
-        Serial.print("vOut=");
-        Serial.print(aux);
-        Serial.print(",");  // Separador
-        Serial.print("vIn=");
-        Serial.println(aux2);
-      }
-      lectura = micros();
-    }; 
-    // por mientras uso ese tiempo para medir
-    //dt = micros() - tant;
-    //Serial.println("valor medido: " + analogRead(pin_vIn)*311/511);
-    //aux = (analogRead(pin_vIn)*311*dt)/511; // 311 es el valor máximo que puede tomar vIn
-    //sumaVINrms += aux*aux;
-    /*
-    aux = (analogRead(pin_vOut)*311*dt)/511;
-    sumaVOUTdc += aux;
-    sumaVOUTrms += aux*aux;
-    aux = ((analogRead(pin_i))*100*dt)/511;
-    sumaIdc += aux;
-    sumaIrms += aux*aux;
-    */
-    tant = micros();
-  };
-  digitalWrite(pin_T1, LOW);
+  digitalWrite(pin_T3, LOW);
   digitalWrite(pin_T5, HIGH); // enciendo T4
   
-  //if(sumaPeriodos > 250){
-    //VOUTdc = sumaVOUTdc/5;// el 5 sale de 250 períodos * 20 milisegundos c/u = 5 segundos
-    //Idc = sumaIdc/5;
-
-    //VINrms = 2*sumaVINrms/5000;
-    //VOUTrms = sumaVOUTrms/5;
-    //Irms = sumaIrms/5;
-
-    //Serial.println(VOUTrms);
-    //Serial.println(VINrms);
-    //Serial.println(Irms);
-/*
-    sumaVOUTdc = 0;
-    sumaIdc = 0;
-    sumaVINrms = 0;
-    sumaVOUTrms = 0;
-    sumaIrms = 0;
-    sumaPeriodos = 0;
-    */
-  //}
-  while(micros() - tiempoinicio < 16665 + retraso){ //Espero el tiempo correspondiente a alfa
-    if(micros() - lectura > 300){
-      aux = analogRead(pin_vOut);
-      aux2 = analogRead(pin_vIn);
-      if(aux != 0){
-        Serial.print("vOut=");
-        Serial.print(aux);
-        Serial.print(",");  // Separador
-        Serial.print("vIn=");
-        Serial.println(aux2);
-      }
-      lectura = micros();
-    }; 
-     // por mientras uso ese tiempo para medir
-    //dt = micros() - tant;
-    //Serial.println("valor medido: " + analogRead(pin_vIn)*311/511);
-    //aux = (analogRead(pin_vIn)*311*dt)/511; // 311 es el valor máximo que puede tomar vIn
-    //sumaVINrms += aux*aux;
-    /*
-    aux = (analogRead(pin_vOut)*311*dt)/511;
-    sumaVOUTdc += aux;
-    sumaVOUTrms += aux*aux;
-    aux = ((analogRead(pin_i))*100*dt)/511;
-    sumaIdc += aux;
-    sumaIrms += aux*aux;
-    */
-    //tant = micros();
+  while(micros() - tiempoinicio < 13332 + retraso){ //Espero el tiempo correspondiente a alfa
   };
   digitalWrite(pin_T5, LOW);
-  digitalWrite(pin_T3, HIGH); // enciendo T4
+  digitalWrite(pin_T1, HIGH); // enciendo T4
+  
+  while(micros() - tiempoinicio < 16665 + retraso){ //Espero el tiempo correspondiente a alfa
+  };
+  digitalWrite(pin_T1, LOW);
+  digitalWrite(pin_T6, HIGH); // enciendo T4
   
   };
 }
@@ -268,11 +105,68 @@ void setup() {
   pinMode(pin_T4, OUTPUT);
   pinMode(pin_T5, OUTPUT);
   pinMode(pin_T6, OUTPUT);
-  Serial.begin(1000000);
+  Serial.begin(115200);
+
+  xTaskCreatePinnedToCore(
+      loop_medidas, /* Funcion de la tarea1 */
+      "Medidas", /* Nombre de la tarea */
+      10000,  /* Tamaño de la pila */
+      NULL,  /* Parametros de entrada */
+      0,  /* Prioridad de la tarea */
+      &Medidas,  /* objeto TaskHandle_t. */
+      0); /* Nucleo donde se correra */
 }
 
 void loop() {
   valorPot = analogRead(potenciometro);
   //Serial.println("valor medido: " + analogRead(pin_vIn));
   
+}
+
+void loop_medidas(void * pvParameters)
+{
+  while(1)
+  {
+    dt = micros() - tant;
+    if(dt > 25){
+      //aux = (analogRead(pin_vIn)*68)/511; // 311 es el valor máximo que puede tomar vIn
+      //sumaVINrms += aux*aux;
+      
+      aux = (analogRead(pin_vOut)*72.8)/511;
+      sumaVOUTdc += aux;
+      sumaVOUTrms += aux*aux;
+        
+      //Serial.println(aux);
+      //aux = (analogRead(pin_vIn)*72.8)/511;
+      sumaVINrms += aux*aux;
+      tant = micros();
+      
+      
+
+      /*
+      aux = ((analogRead(pin_i))*dt)/511;
+      sumaIdc += aux;
+      sumaIrms += aux*aux;
+      */
+      
+    }
+
+    if(sumaPeriodos > 125){
+    VOUTdc = sumaVOUTdc/5000;// el 2500 sale de 125 períodos * 20 milisegundos c/u = 5 segundos
+
+    VINrms = 2*sumaVINrms*25/250000;
+    VOUTrms = sumaVOUTrms*25/250000;
+    VOUTdc = sumaVOUTdc*25/250000;
+    Serial.println("Vodc = " + VOUTdc);
+    Serial.println("Vorms = " + VOUTdc);
+    //Serial.println("VINrms = " + VINrms);
+    //Serial.println(Irms);
+
+    sumaVOUTdc = 0;
+    sumaVINrms = 0;
+    sumaVOUTrms = 0;
+    sumaPeriodos = 0;
+    
+  }
+ }
 }
