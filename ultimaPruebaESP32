@@ -1,170 +1,183 @@
-
-
+// Definición de la función ejecutada por el núcleo numero 1 del microprocesador
 TaskHandle_t Medidas;
 
-#define potenciometro 36 //O A0
+// definición de los pines de entrada y salida
+#define potenciometro 36
 #define pin_restaRS 32
 #define pin_T1 12
 #define pin_T2 14
 #define pin_T3 26
 #define pin_T4 27
 #define pin_T5 25
-#define pin_T6 33
-#define pin_vIn 13
+#define pin_T6 13
+#define pin_vIn 33
 #define pin_vOut 34
-#define pin_i 39
+#define pin_iIn 39
 #define pin_iOut 35
 
-int valorPot;
 
-int voltajeIn;
-int sumaVINdc;
-int sumaVINrms;
-int VINdc;
+// variables para voltaje de entrada
+unsigned int sumaVINrms;
 int VINrms;
-
-int voltajeOut;
-int sumaVOUTdc;
-int sumaVOUTrms;
+// variables para voltaje de salida
+unsigned int sumaVOUTdc;
+unsigned int sumaVOUTrms;
 int VOUTdc;
 int VOUTrms;
+// variables para corriente de entrada
+unsigned int sumaIirms;
+int Iirms;
+// variables para corriente de salida
+unsigned int sumaIOdc;
+unsigned int sumaIOrms;
+int IOdc;
+int IOrms;
+// variables auxiliares para medidas
+int aux;
+int auxI;
 
-int corriente;
-int sumaIdc;
-int sumaIrms;
-int Idc;
-int Irms;
-
-
-int sumaPeriodos;
-
+// variables del programa
+int valorPot;
+volatile int sumaPeriodos;
 int tant = 0;
 int dt;
-
-int aux;
-int aux2;
 volatile int retraso;
 volatile int tiempoprueba = 0;
 
-volatile int lectura = 0;
-
 void IRAM_ATTR interrupcion(){ // funcion que se ejecuta con la interrupción
-  if((micros() - tiempoprueba > 19900)){
-  tiempoprueba = micros();
-  
-  int tiempoinicio = micros(); //mido en que momento comencé el período
-  retraso = valorPot*(3333)/511; // calculo el tiempo que tengo que esperar dependiendo del valor del potenciómetro (3333 microsegundos equivale a pi/3)
+  if((micros() - tiempoprueba > 19900)){ // verifico que hayan pasado aproximadamente 20 milisegundos desde el comienzo de la secuencia anterior
+  tiempoprueba = micros(); // se mide el tiempo de comienzo de la ejecución
+  int tiempoinicio = micros(); //mido en que momento comencé el período actual
+  retraso = valorPot*(1667)/511; // calculo el tiempo que tengo que esperar dependiendo del valor del potenciómetro (1667 microsegundos equivale a pi/6)
   sumaPeriodos++; //cuento los periodos para promediar mas adelante
   while(micros() - tiempoinicio < retraso){ //Espero el tiempo correspondiente al retraso
-    // por mientras uso ese tiempo para medir
-    
   }; 
-  digitalWrite(pin_T6, LOW);
-  digitalWrite(pin_T2, HIGH); //enciendo T4
+  digitalWrite(pin_T6, LOW); //apago T6 que estaba prendido del ciclo anterior
+  digitalWrite(pin_T2, HIGH); //enciendo T2
   
   while(micros() - tiempoinicio < 3333 + retraso){ //Espero el tiempo correspondiente a alfa
- // por mientras uso ese tiempo para medir
   };
-  digitalWrite(pin_T2, LOW);
-  digitalWrite(pin_T4, HIGH); // enciendo T2
+  digitalWrite(pin_T2, LOW); // apago T2
+  digitalWrite(pin_T4, HIGH); // enciendo T4
   
   while(micros() - tiempoinicio < 6666 + retraso){ //Espero el tiempo correspondiente a alfa
   };
-  digitalWrite(pin_T4, LOW);
-  digitalWrite(pin_T3, HIGH); // enciendo T6
   
+  digitalWrite(pin_T4, LOW); // apago T4
+  digitalWrite(pin_T3, HIGH); // enciendo T3
   
   while(micros() - tiempoinicio < 9999 + retraso){ //Espero el tiempo correspondiente a alfa
   };
-  digitalWrite(pin_T3, LOW);
-  digitalWrite(pin_T5, HIGH); // enciendo T4
+  
+  digitalWrite(pin_T3, LOW); // apago T3
+  digitalWrite(pin_T5, HIGH); // enciendo T5
   
   while(micros() - tiempoinicio < 13332 + retraso){ //Espero el tiempo correspondiente a alfa
   };
-  digitalWrite(pin_T5, LOW);
-  digitalWrite(pin_T1, HIGH); // enciendo T4
+  
+  digitalWrite(pin_T5, LOW); // apago T5
+  digitalWrite(pin_T1, HIGH); // enciendo T1
   
   while(micros() - tiempoinicio < 16665 + retraso){ //Espero el tiempo correspondiente a alfa
   };
-  digitalWrite(pin_T1, LOW);
-  digitalWrite(pin_T6, HIGH); // enciendo T4
+  
+  digitalWrite(pin_T1, LOW); // apago T1
+  digitalWrite(pin_T6, HIGH); // enciendo T6
   
   };
 }
 
 
 void setup() {
-  // falta definir pines como entrada
-  //WiFi.mode(WIFI_OFF);
-  //WiFi.disconnect(true);
-  analogReadResolution(9);
-  attachInterrupt(digitalPinToInterrupt(pin_restaRS), interrupcion, FALLING);
+  analogReadResolution(9); //se configura la resolución de los ADC con 9 bits
+  attachInterrupt(digitalPinToInterrupt(pin_restaRS), interrupcion, RISING); //se configura la interrupción para que ocurra en el flanco de subida de la señal
+  // se definen los pines de los tiristores como salidas
   pinMode(pin_T1, OUTPUT);
   pinMode(pin_T2, OUTPUT);
   pinMode(pin_T3, OUTPUT);
   pinMode(pin_T4, OUTPUT);
   pinMode(pin_T5, OUTPUT);
   pinMode(pin_T6, OUTPUT);
+  // Velocidad del puerto serial para imprimir resultados en consola
   Serial.begin(115200);
 
   xTaskCreatePinnedToCore(
-      loop_medidas, /* Funcion de la tarea1 */
-      "Medidas", /* Nombre de la tarea */
-      10000,  /* Tamaño de la pila */
-      NULL,  /* Parametros de entrada */
-      0,  /* Prioridad de la tarea */
-      &Medidas,  /* objeto TaskHandle_t. */
-      0); /* Nucleo donde se correra */
+      loop_medidas, // Funcion de medidas
+      "Medidas", // Nombre de la tarea
+      10000,  // Tamaño de la pila 
+      NULL,  // Parametros de entrada
+      0,  // Prioridad de la tarea 
+      &Medidas,  // objeto TaskHandle_t. definido al princio del código
+      0); // Nucleo donde se correra 
 }
 
 void loop() {
-  valorPot = analogRead(potenciometro);
-  //Serial.println("valor medido: " + analogRead(pin_vIn));
+  valorPot = analogRead(potenciometro); //se lee el valor del potenciómetro en todo momento
   
 }
 
+// función que hace las medidas y los cálculos
 void loop_medidas(void * pvParameters)
 {
   while(1)
   {
     dt = micros() - tant;
-    if(dt > 25){
-      //aux = (analogRead(pin_vIn)*68)/511; // 311 es el valor máximo que puede tomar vIn
-      //sumaVINrms += aux*aux;
-      
-      aux = (analogRead(pin_vOut)*72.8)/511;
-      sumaVOUTdc += aux;
-      sumaVOUTrms += aux*aux;
-        
-      //Serial.println(aux);
-      //aux = (analogRead(pin_vIn)*72.8)/511;
-      sumaVINrms += aux*aux;
-      tant = micros();
-      
-      
+    if(dt > 333){ // se dejan pasar 333 microsegundos desde la última toma de muestras (se elije 333 porque es múltiplo de el espaciado temporal entre disparos)
 
-      /*
-      aux = ((analogRead(pin_i))*dt)/511;
-      sumaIdc += aux;
-      sumaIrms += aux*aux;
-      */
+      // medida de voltaje de entrada
+      aux = (analogRead(pin_vIn)*65)/511; // ESCALADO: 68 es el valor máximo que puede tomar vIn
+      sumaVINrms += aux*aux; // sumatoria de muestras elevadas al cuadrado
+
+      // medida de voltaje de salida
+      aux = (analogRead(pin_vOut)*68)/511; // ESCALADO: 68 es el valor máximo que puede tomar vOut
+      sumaVOUTdc += aux; // sumatoria de muestras
+      sumaVOUTrms += aux*aux; // sumatoria de muestras elevadas al cuadrado
+
+      // medida de corriente de entrada
+      aux = (analogRead(pin_iIn)*5)/511; // ESCALADO
+      auxI = (aux-2.5)/0.185; //pasaje de voltaje a corriente, 0.185 es la sensibilidad del sensor de corriente segun la hoja de datos
+      sumaIirms += aux*aux; // sumatoria de muestras elevadas al cuadrado
+
+      // medida de corriente de salida
+      aux = (analogRead(pin_iOut)*5)/511; // ESCALADO
+      auxI = (aux-2.5)/0.185; //0.185 es la sensibilidad del sensor de corriente segun la hoja de datos
+      sumaIOdc += aux; // sumatoria de muestras 
+      sumaIOrms += aux*aux; // sumatoria de muestras elevadas al cuadrado
+     
+      tant = micros();
       
     }
 
-    if(sumaPeriodos > 125){
-    VOUTdc = sumaVOUTdc/5000;// el 2500 sale de 125 períodos * 20 milisegundos c/u = 5 segundos
+    if(sumaPeriodos > 200){ // Se realiza el promedio luego de 200 períodos de 20 milisegundos = 4 segundos
+      
+    VINrms = sqrt(2*sumaVINrms*333/400000); // el 400000 viene de 200 períodos * 20 milisegundos * 100 para ajustar unidades
+    
+    VOUTrms = sqrt(sumaVOUTrms*333/400000);
+    VOUTdc = sumaVOUTdc*333/400000;
 
-    VINrms = 2*sumaVINrms*25/250000;
-    VOUTrms = sumaVOUTrms*25/250000;
-    VOUTdc = sumaVOUTdc*25/250000;
-    Serial.println("Vodc = " + VOUTdc);
-    Serial.println("Vorms = " + VOUTdc);
-    //Serial.println("VINrms = " + VINrms);
-    //Serial.println(Irms);
+    Iirms = sumaIirms*333/4000;
 
+    IOdc = sumaIOdc*333/4000;
+    IOrms = sumaIOrms*333/4000;
+
+    // se imprimen los valores obtenidos en consola
+    Serial.println(VINrms);
+ 
+    Serial.println(VOUTdc);
+    Serial.println(VOUTrms);
+    
+    Serial.println(Iirms);
+    
+    Serial.println(IOdc);
+    Serial.println(IOrms);
+
+    // se reinician las variables que llevan la sumatoria
     sumaVOUTdc = 0;
     sumaVINrms = 0;
     sumaVOUTrms = 0;
+    sumaIirms = 0;
+    sumaIOdc = 0;
+    sumaIOrms = 0;
     sumaPeriodos = 0;
     
   }
